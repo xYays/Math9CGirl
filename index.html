@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>A little note for you</title>
+  <meta name="description" content="A small, single-page note with a personalized greeting." />
+  <meta property="og:title" content="A little note for you" />
+  <meta property="og:description" content="Open me :) A personalized message inside." />
+  <meta name="theme-color" content="#ffffff" />
+  <style>
+    :root {
+      --maxw: 680px;
+      --radius: 14px;
+      --pad: 18px;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      line-height: 1.5;
+      background:
+        radial-gradient(1200px 600px at 10% -10%, #f7f7ff 20%, transparent 60%),
+        radial-gradient(1200px 600px at 120% 0%, #f5fff7 20%, transparent 60%),
+        #ffffff;
+      color: #0f172a;
+    }
+    main {
+      max-width: var(--maxw);
+      margin: 12vh auto;
+      padding: 0 18px;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: var(--radius);
+      box-shadow: 0 8px 30px rgba(0,0,0,.06);
+      padding: clamp(18px, 3.5vw, 28px);
+    }
+    h1, h2 {
+      margin: 0 0 10px;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+    }
+    h1 { font-size: clamp(1.6rem, 3.5vw, 2rem); }
+    h2 { font-size: clamp(1.4rem, 3.2vw, 1.8rem); }
+    p { margin: 0.6em 0; }
+    form {
+      display: grid;
+      gap: 12px;
+      margin-top: 8px;
+    }
+    label { font-weight: 600; }
+    input[type="text"]{
+      padding: 12px 14px;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      font-size: 1rem;
+    }
+    input[type="text"]:focus{
+      outline: 3px solid #dbeafe;
+      border-color: #60a5fa;
+    }
+    button {
+      justify-self: start;
+      padding: 10px 16px;
+      border: 1px solid #0f172a12;
+      border-radius: 999px;
+      background: #0ea5e9;
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button.secondary {
+      background: #f3f4f6;
+      color: #111827;
+      border-color: #e5e7eb;
+    }
+    .muted { color: #475569; font-size: .95rem; }
+    .hidden { display: none !important; }
+    .msg {
+      white-space: pre-wrap; /* keep intentional line breaks if you add any */
+    }
+    footer {
+      margin-top: 16px;
+      color: #6b7280;
+      font-size: .9rem;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section id="ask" class="card" aria-labelledby="ask-title">
+      <h1 id="ask-title">What’s your name?</h1>
+      <p class="muted">Short answer is perfect.</p>
+
+      <form id="name-form" autocomplete="on">
+        <label for="name">Your name</label>
+        <input id="name"
+               name="name"
+               type="text"
+               placeholder="e.g., Maya"
+               inputmode="text"
+               autocomplete="given-name"
+               minlength="1"
+               maxlength="40"
+               required />
+        <div>
+          <button type="submit">Show the message</button>
+        </div>
+        <p id="error" class="muted hidden" role="alert" aria-live="polite">Please enter your name.</p>
+      </form>
+    </section>
+
+    <section id="note" class="card hidden" aria-live="polite" aria-labelledby="note-title">
+      <h2 id="note-title">Hey <span id="name-slot"></span>,</h2>
+      <p class="msg">
+        so basically all I wanted to do was give you a compliment or two, since I can't grow the courage to tell you this to your face LOL. Anyways, just so you know this is a message dedicated just for you, you've sat near me this entire Math009C class. Which I think is the fourth row? I think you sit on either the second to last or last seat sometimes. I hope thats specific enough. I really like the way you dress. I think you're really pretty and your style is amazing. I've also heard you speak and your voice is so sweet. I hope I'm the first to make something like this LMAO ANYWAYS GOODLUCK ON YOUR FINAL!! we both passing that and if you're friends are also reading this, hey guys LOL. I hope you guys don't mind that I made her this. GOODLUCK TO YOU GUYS AS WELL. Okay, so this was supposed to be shown to you on Thursday (08/28), but either way, I hope you passed your final and if you take Math010A then I might or might not see you in there too!!
+      </p>
+      <div style="margin-top:14px; display:flex; gap:10px; flex-wrap:wrap;">
+        <button id="edit" class="secondary" type="button" aria-describedby="edit-hint">Change name</button>
+        <span id="edit-hint" class="muted" aria-hidden="true">Fix a typo or try a nickname.</span>
+      </div>
+    </section>
+
+    <footer>
+      <noscript>This page needs JavaScript enabled.</noscript>
+    </footer>
+  </main>
+
+  <script>
+    (function () {
+      const form = document.getElementById('name-form');
+      const input = document.getElementById('name');
+      const error = document.getElementById('error');
+      const ask = document.getElementById('ask');
+      const note = document.getElementById('note');
+      const nameSlot = document.getElementById('name-slot');
+      const editBtn = document.getElementById('edit');
+
+      // Optional: restore prior entry (nice for refreshes)
+      try {
+        const saved = localStorage.getItem('visitor-name');
+        if (saved) input.value = saved;
+      } catch (e) { /* ignore private mode errors */ }
+
+      function sanitize(text) {
+        // basic HTML-escape to keep things safe
+        return text.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+      }
+
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const raw = (input.value || '').trim();
+        if (!raw) {
+          error.classList.remove('hidden');
+          input.focus();
+          return;
+        }
+        error.classList.add('hidden');
+        const clean = sanitize(raw);
+
+        nameSlot.textContent = clean;
+
+        // remember name (non-essential)
+        try { localStorage.setItem('visitor-name', clean); } catch (e) {}
+
+        // toggle views
+        ask.classList.add('hidden');
+        note.classList.remove('hidden');
+
+        // move focus to the greeting for screen readers
+        document.getElementById('note-title').focus?.();
+        // optional: anchor in URL for sharing
+        location.hash = '#for-' + encodeURIComponent(clean.toLowerCase().replace(/\s+/g,'-'));
+      });
+
+      editBtn.addEventListener('click', () => {
+        note.classList.add('hidden');
+        ask.classList.remove('hidden');
+        setTimeout(() => input.focus(), 0);
+      });
+    }());
+  </script>
+</body>
+</html>
